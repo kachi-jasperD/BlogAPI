@@ -34,6 +34,8 @@ const getAllArticle = async (req, res, next) => {
   const { limit = 10, page = 1 } = req.query;
   const skip = (page - 1) * limit;
 
+  // add query code here
+
   try {
     const articles = await ArticleModel.find({})
       .sort({ createdAt: -1 })
