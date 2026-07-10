@@ -16,7 +16,14 @@ const createArticle = async (req, res, next) => {
   }
 
   try {
-    const newArticle = new ArticleModel(value);
+    console.log(req.user);
+    console.log(req.user.userId);
+
+    const newArticle = new ArticleModel({
+      title: value.title,
+      content: value.content,
+      author: req.user.userId,
+    });
     await newArticle.save();
 
     return res.status(201).json({
@@ -38,6 +45,7 @@ const getAllArticle = async (req, res, next) => {
 
   try {
     const articles = await ArticleModel.find({})
+      .populate("author", "name _id email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -85,14 +93,32 @@ const updateArticle = async (req, res, next) => {
   }
 
   try {
-    const updateArticle = await ArticleModel.findByIdAndUpdate(
-      req.params.id,
+    // const updateArticle = await ArticleModel.findByIdAndUpdate(
+    //   req.params.id,
+    //   value,
+    //   { new: true, runValidators: true },
+    // );
+    // if (!updateArticle) {
+    //   return res.status(404).json({
+    //     message: `Article with ${req.params.id} not found`,
+    //   });
+    // }
+
+    const updatedArticle = await ArticleModel.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        author: req.user.userId,
+      },
       value,
-      { new: true, runValidators: true },
+      {
+        new: true,
+        runValidators: true,
+      },
     );
-    if (!updateArticle) {
+
+    if (!updatedArticle) {
       return res.status(404).json({
-        message: `Article with ${req.params.id} not found`,
+        message: "Article not found or you are not authorized to update it",
       });
     }
 
@@ -109,13 +135,33 @@ const updateArticle = async (req, res, next) => {
 
 const deleteArticle = async (req, res, next) => {
   try {
-    const deleteArticle = await ArticleModel.findByIdAndDelete(req.params.id);
+    // const deleteArticle = await ArticleModel.findByIdAndDelete(req.params.id);
 
-    if (!deleteArticle) {
+    // if (!deleteArticle) {
+    //   return res.status(404).json({
+    //     message: `Article with ${req.params.id} not found`,
+    //   });
+    // }
+
+    // return res.status(200).json({
+    //   message: "Article deleted successfully",
+    // });
+
+    const article = await ArticleModel.findById(req.params.id);
+
+    if (!article) {
       return res.status(404).json({
-        message: `Article with ${req.params.id} not found`,
+        message: "Article not found",
       });
     }
+
+    if (article.author.toString() !== req.user.userId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this article",
+      });
+    }
+
+    await article.deleteOne();
 
     return res.status(200).json({
       message: "Article deleted successfully",

@@ -6,6 +6,7 @@ const RequestLogger = require("./middlewares/logger.js");
 const errorHandler = require("./middlewares/errorHandler.js");
 const ArticleRoutes = require("./routes/article.route.js");
 const CommentRoutes = require("./routes/comment.route.js");
+const UserRoutes = require("./routes/user.route.js");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -28,6 +29,7 @@ connectDB();
 
 app.use("/api", ArticleRoutes);
 app.use("/api", CommentRoutes);
+app.use("/api", UserRoutes);
 
 //------------------------------------
 // LAST MIDDLEWARE
